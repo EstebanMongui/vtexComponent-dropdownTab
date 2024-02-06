@@ -1,0 +1,11 @@
+mutation createOrganizationRequests(
+  $input: OrganizationInput!
+  $notifyUsers: Boolean
+) {
+  createOrganizationRequest(input: $input, notifyUsers: $notifyUsers)
+    @context(provider: "vtex.b2b-organizations-graphql") {
+    id
+    href
+    status
+  }
+}
