@@ -1,10 +1,21 @@
-import React, { ChangeEvent, ReactElement, useEffect, useState } from 'react'
+import React, {
+  ReactElement,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { useMutation } from 'react-apollo'
 import { Input, Button, RadioGroup, Box } from 'vtex.styleguide'
 import { useCssHandles } from 'vtex.css-handles'
 import './styles.css'
 
 import CreateOrganizationRequest from '../graphql/createOrganizationRequest.graphql'
+import FormContextProvider, {
+  DefaultValue,
+  FormContext,
+  ReducerTypes,
+} from '../context/FormCtx'
 
 const CSS_HANDLES = ['buttonsSet', 'spacing'] as const
 
@@ -14,12 +25,18 @@ const CustomRequestOrganizationForm = () => {
 
   const handles = useCssHandles(CSS_HANDLES)
   const [userType, setUserType] = useState(0)
-  const [step, setStep] = useState(INITIAL_STEP)
-  const [organizationData, setOrganizationData] = useState({})
+  const [organizationData] = useState({})
 
   const [createOrganizationRequest] = useMutation(CreateOrganizationRequest)
+  const ctx: DefaultValue = useContext(FormContext)
 
-  const isNaturalPerson: boolean = userType === 0
+  const [contextState, dispatch] = ctx
+
+  useEffect(() => {
+    console.info(contextState)
+  }, [contextState])
+
+  const isNaturalPerson: boolean = useMemo(() => userType === 0, [userType])
   const handleRadioClick = () => {
     if (!isNaturalPerson) return setUserType(0)
 
@@ -34,20 +51,17 @@ const CustomRequestOrganizationForm = () => {
     })
   }
 
+  const currentStep =
+    'step' in contextState && typeof contextState.step === 'number'
+      ? contextState.step
+      : 1
+
   const handleSteps = () => {
-    console.info('handling step...')
-    setStep((currentStep) => (currentStep += 1))
+    dispatch({
+      type: ReducerTypes.setStep,
+      step: currentStep + 1,
+    })
   }
-
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { value, name } = e.target
-
-    setOrganizationData({ ...organizationData, [name]: [value] })
-  }
-
-  useEffect(() => {
-    console.info(organizationData)
-  }, [organizationData])
 
   const stepOne = (
     <fieldset className="pa5">
@@ -63,6 +77,15 @@ const CustomRequestOrganizationForm = () => {
         value={!isNaturalPerson ? 'natural' : 'juridic'}
         onChange={handleRadioClick}
       />
+      <Input
+        placeholder={`${!isNaturalPerson ? 'Name' : 'Organization Name'}`}
+        type="file"
+        multiple
+        name="organizationName"
+        size="small"
+        label={`Enter your ${!isNaturalPerson ? '' : 'corporative'} name`}
+        className="ma4"
+      />
     </fieldset>
   )
 
@@ -74,7 +97,6 @@ const CustomRequestOrganizationForm = () => {
         name="organizationName"
         size="small"
         label={`Enter your ${!isNaturalPerson ? '' : 'corporative'} name`}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(e)}
         className="ma4"
       />
       <span className="ma4" />
@@ -83,7 +105,6 @@ const CustomRequestOrganizationForm = () => {
         name="organizationName"
         size="small"
         label="Commercial name"
-        onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(e)}
       />
       <span className="ma4" />
       {isNaturalPerson && (
@@ -92,7 +113,6 @@ const CustomRequestOrganizationForm = () => {
           name="organizationName"
           size="small"
           label="Tax Identification Number"
-          onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(e)}
           className="ma4"
         />
       )}
@@ -107,7 +127,6 @@ const CustomRequestOrganizationForm = () => {
         name="AdminName"
         size="small"
         label="Admin name"
-        onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(e)}
         className="ma4"
       />
       <span className="ma4" />
@@ -116,7 +135,6 @@ const CustomRequestOrganizationForm = () => {
         name="AdminLastName"
         size="small"
         label="Admin Last Name"
-        onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(e)}
       />
       <span className="ma4" />
       <Input
@@ -124,7 +142,6 @@ const CustomRequestOrganizationForm = () => {
         name="AdminEmail"
         size="small"
         label="Admin email"
-        onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(e)}
         type="email"
       />
     </fieldset>
@@ -138,7 +155,6 @@ const CustomRequestOrganizationForm = () => {
         name="CostCenterName"
         size="small"
         label="Cost center name"
-        onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(e)}
       />
       <span className="ma4" />
       <Input
@@ -146,7 +162,6 @@ const CustomRequestOrganizationForm = () => {
         name="Cost Center Phone Number"
         size="small"
         label="Cost center's phone number"
-        onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(e)}
         type="phone"
       />
       <span className="ma4" />
@@ -155,7 +170,6 @@ const CustomRequestOrganizationForm = () => {
         name="CostCenterCountry"
         size="small"
         label="Cost Center Country"
-        onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(e)}
       />
       <span className="ma4" />
       <Input
@@ -163,7 +177,6 @@ const CustomRequestOrganizationForm = () => {
         name="CostCenterDepartment"
         size="small"
         label="Cost Center Department"
-        onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(e)}
       />
       <span className="ma4" />
       <Input
@@ -171,7 +184,6 @@ const CustomRequestOrganizationForm = () => {
         name="CostCenterCity"
         size="small"
         label="Cost Center City"
-        onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(e)}
       />
       <span className="ma4" />
       <Input
@@ -179,7 +191,6 @@ const CustomRequestOrganizationForm = () => {
         name="CostCenterAddress"
         size="small"
         label="Cost Center Address"
-        onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(e)}
       />
       <span className="ma4" />
       <Input
@@ -187,16 +198,16 @@ const CustomRequestOrganizationForm = () => {
         name="Receiver"
         size="small"
         label="Receiver"
-        onChange={(e: ChangeEvent<HTMLInputElement>) => handleInputChange(e)}
       />
       <span className="ma4" />
     </fieldset>
   )
 
   const handleBackButtonClick = () =>
-    setStep((currentStep) => (currentStep -= 1))
+    dispatch({ type: ReducerTypes.setStep, step: currentStep - 1 })
 
-  const handleMainButtonClick = step < LAST_STEP ? handleSteps : sendRequest
+  const handleMainButtonClick =
+    currentStep < LAST_STEP ? handleSteps : sendRequest
 
   const formSteps: { [key: number]: ReactElement } = {
     1: stepOne,
@@ -206,20 +217,21 @@ const CustomRequestOrganizationForm = () => {
   }
 
   return (
-    <Box>
-      <h1>Powered by Tebi</h1>
-      {formSteps[step]}
-      <div className="mt7" />
-      <span className={`ma5 ${handles.buttonsSet}`}>
-        <Button
-          disabled={step === INITIAL_STEP}
-          onClick={handleBackButtonClick}
-        >{`${'< Back'}`}</Button>
-        <Button onClick={handleMainButtonClick}>
-          {step < LAST_STEP ? 'Next >' : 'Send Request'}
-        </Button>
-      </span>
-    </Box>
+    <FormContextProvider>
+      <Box>
+        {formSteps[currentStep]}
+        <div className="mt7" />
+        <span className={`ma5 ${handles.buttonsSet}`}>
+          <Button
+            disabled={currentStep === INITIAL_STEP}
+            onClick={handleBackButtonClick}
+          >{`${'< Back'}`}</Button>
+          <Button onClick={handleMainButtonClick}>
+            {currentStep < LAST_STEP ? 'Next >' : 'Send Request'}
+          </Button>
+        </span>
+      </Box>
+    </FormContextProvider>
   )
 }
 
