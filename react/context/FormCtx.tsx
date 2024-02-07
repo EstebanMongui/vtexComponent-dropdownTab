@@ -1,41 +1,59 @@
-import React, { Dispatch, FC, createContext, useReducer } from 'react'
-
-// eslint-disable-next-line no-restricted-syntax, no-shadow
-export enum ReducerTypes {
-  setData = 'SET_DATA',
-  setStep = 'SET_STEP',
-}
+import React, {
+  Dispatch,
+  FC,
+  createContext,
+  useContext,
+  useReducer,
+} from 'react'
 
 type Action =
   | {
-      type: ReducerTypes.setData
+      type: 'SET_DATA'
       data: Record<string, unknown>
     }
   | {
-      type: ReducerTypes.setStep
-      step: number
+      type: 'NEXT_STEP' | 'BACK_STEP'
     }
 
-export type DefaultValue = [Record<string, unknown>, Dispatch<Action>]
+export type State = { step: number } & Record<string, unknown>
 
-export const FormContext = createContext<DefaultValue>([{}, () => {}])
+export type DefaultValue = [State, Dispatch<Action>]
 
-const reducer = (state: Record<string, unknown>, action: Action) => {
-  console.info('State', state)
+export const INITIAL_STEP = 1
+
+export const FormContext = createContext<DefaultValue>([
+  { step: INITIAL_STEP },
+  () => {},
+])
+
+const reducer = (state: State, action: Action) => {
   switch (action.type) {
-    case ReducerTypes.setData:
+    case 'SET_DATA':
       return { ...state, ...action.data }
 
-    case ReducerTypes.setStep:
-      return { ...state, step: action.step }
+    case 'NEXT_STEP':
+      return { ...state, step: state.step + 1 }
+
+    case 'BACK_STEP':
+      return { ...state, step: state.step - 1 }
 
     default:
       return state
   }
 }
 
+export const useForm = () => {
+  const context = useContext(FormContext)
+
+  if (!context) {
+    throw new Error('useForm must be used within a FormProvider')
+  }
+
+  return context
+}
+
 const FormContextProvider: FC = ({ children }) => {
-  const value = useReducer(reducer, {})
+  const value = useReducer(reducer, { step: INITIAL_STEP })
 
   return <FormContext.Provider value={value}>{children}</FormContext.Provider>
 }
